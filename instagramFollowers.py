@@ -1,5 +1,8 @@
 import json
+import unittest
+from unittest.mock import patch, mock_open
 
+# Your main functions
 def load_data(file_path):
     with open(file_path, 'r') as file:
         data = json.load(file)
@@ -49,5 +52,48 @@ def main():
     for user in not_followed_back:
         print(user)
 
+# Unit tests
+class TestSocialMedia(unittest.TestCase):
+    @patch("builtins.open", new_callable=mock_open, read_data=json.dumps([
+        {"string_list_data": [{"value": "user1"}]},
+        {"string_list_data": [{"value": "user2"}]}
+    ]))
+    def test_load_data_followers(self, mock_file):
+        expected_data = [
+            {"string_list_data": [{"value": "user1"}]},
+            {"string_list_data": [{"value": "user2"}]}
+        ]
+        data = load_data('path_to_your_followers.json')
+        self.assertEqual(data, expected_data)
+    
+    @patch("builtins.open", new_callable=mock_open, read_data=json.dumps([
+        {"string_list_data": [{"value": "user3"}]},
+        {"string_list_data": [{"value": "user4"}]}
+    ]))
+    def test_load_data_following(self, mock_file):
+        expected_data = [
+            {"string_list_data": [{"value": "user3"}]},
+            {"string_list_data": [{"value": "user4"}]}
+        ]
+        data = load_data('path_to_your_following.json')
+        self.assertEqual(data, expected_data)
+
+    def test_extract_followers_following(self):
+        data = {
+            "followers": [{"string_list_data": [{"value": "user1"}]}, {"string_list_data": [{"value": "user2"}]}],
+            "following": [{"string_list_data": [{"value": "user2"}]}, {"string_list_data": [{"value": "user3"}]}]
+        }
+        followers, following = extract_followers_following(data)
+        self.assertEqual(followers, {"user1", "user2"})
+        self.assertEqual(following, {"user2", "user3"})
+    
+    def test_compare_followers_following(self):
+        followers = {"user1", "user2"}
+        following = {"user2", "user3"}
+        not_following_back, not_followed_back = compare_followers_following(followers, following)
+        self.assertEqual(not_following_back, {"user3"})
+        self.assertEqual(not_followed_back, {"user1"})
+
 if __name__ == "__main__":
     main()
+    unittest.main(argv=[''], verbosity=2, exit=False)
